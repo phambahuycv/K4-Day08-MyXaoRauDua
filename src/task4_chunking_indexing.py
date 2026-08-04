@@ -45,6 +45,7 @@ CHUNK_SIZE = 800        # Vì sao chọn 800? ...
 CHUNK_OVERLAP = 100      # Vì sao chọn 100? ...
 CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
 
+
 # TODO: Chọn embedding model và giải thích
 EMBEDDING_MODEL = "BAAI/bge-m3"  # Vì sao? Multilingual, tốt cho tiếng Việt lẫn tiếng Anh
 EMBEDDING_DIM = 1024
