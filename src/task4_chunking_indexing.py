@@ -40,10 +40,11 @@ CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 # CONFIGURATION — Giải thích lựa chọn của bạn trong comment
 # =============================================================================
 
-# TODO: Chọn chunking strategy và giải thích vì sao
-CHUNK_SIZE = 500        # Vì sao chọn 500? ...
-CHUNK_OVERLAP = 50      # Vì sao chọn 50? ...
+# Chọn chunking strategy theo hướng dẫn Checkpoint 2
+CHUNK_SIZE = 800        # Cắt đoạn 800 ký tự phù hợp với các đoạn văn bản dài
+CHUNK_OVERLAP = 100     # Overlap 100 ký tự (12.5%) giữ ngữ cảnh nối giữa các chunk
 CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
+
 
 # TODO: Chọn embedding model và giải thích
 EMBEDDING_MODEL = "BAAI/bge-m3"  # Vì sao? Multilingual, tốt cho tiếng Việt lẫn tiếng Anh
