@@ -1,10 +1,3 @@
-# Chính Sách Quyền Riêng Tư Và Bảo Mật Thông Tin Khách Hàng
-
-**Source:** https://seller-vn.tiktok.com/university/essay?default_language=vi-VN&knowledge_id=6837776050308866&lang=vi-VN
-**Crawled:** 2026-08-03
-
----
-
 ---
 doc_id: tiktok-privacy-policy
 title: Chính Sách Quyền Riêng Tư Và Bảo Mật Thông Tin Khách Hàng

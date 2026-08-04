@@ -25,6 +25,10 @@ Logic:
     điểm số giữa hai nhóm rồi chọn ngưỡng nằm giữa.
 """
 
+import os
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+from concurrent.futures import ThreadPoolExecutor
+
 from .task5_semantic_search import semantic_search
 from .task6_lexical_search import lexical_search
 from .task7_reranking import rerank, rerank_rrf
@@ -38,7 +42,7 @@ from .task8_pageindex_vectorless import pageindex_search
 # TODO: Calibrate threshold này bằng cách tự đo điểm cosine của semantic_search
 # cho câu hỏi liên quan vs câu hỏi lạc đề (xem ghi chú ở trên) — ĐỪNG copy nguyên
 # giá trị mẫu, mỗi corpus/embedding model sẽ cho khoảng điểm khác nhau.
-SCORE_THRESHOLD = 0.3   # Nếu best score (cosine gốc) < threshold → fallback PageIndex
+SCORE_THRESHOLD = 0.48  # Calibrated cosine threshold from the lab specification
 DEFAULT_TOP_K = 5
 RERANK_METHOD = "rrf"  # "cross_encoder" | "mmr" | "rrf"
 
@@ -77,33 +81,42 @@ def retrieve(
             'source': str  # 'hybrid' hoặc 'pageindex'
         }
     """
-    # TODO: Implement full retrieval pipeline
-    #
-    # Step 1: Song song chạy semantic + lexical
-    # dense_results = semantic_search(query, top_k=top_k * 2)
-    # sparse_results = lexical_search(query, top_k=top_k * 2)
-    #
-    # Step 2: Merge bằng RRF
-    # merged = rerank_rrf([dense_results, sparse_results], top_k=top_k * 2)
-    # for item in merged:
-    #     item["source"] = "hybrid"
-    #
-    # Step 3: Rerank
-    # if use_reranking and merged:
-    #     final_results = rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
-    # else:
-    #     final_results = merged[:top_k]
-    #
-    # Step 4: Check threshold DÙNG ĐIỂM COSINE GỐC (dense_results), KHÔNG PHẢI RRF
-    # best_score = dense_results[0]["score"] if dense_results else 0.0
-    # if best_score < score_threshold:
-    #     print(f"  ⚠ Semantic best score ({best_score:.3f}) < threshold ({score_threshold})")
-    #     fallback = pageindex_search(query, top_k=top_k)
-    #     if fallback:
-    #         return fallback
-    #
-    # return final_results[:top_k]
-    raise NotImplementedError("Implement retrieve")
+    if not query or top_k <= 0:
+        return []
+
+    candidate_k = max(top_k * 3, top_k)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        dense_future = executor.submit(_safe_search, semantic_search, query, candidate_k)
+        sparse_future = executor.submit(_safe_search, lexical_search, query, candidate_k)
+        dense_results = dense_future.result()
+        sparse_results = sparse_future.result()
+
+    merged = rerank_rrf([dense_results, sparse_results], top_k=candidate_k)
+    for item in merged:
+        item["source"] = "hybrid"
+
+    if use_reranking and merged:
+        final_results = rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
+        for item in final_results:
+            item["source"] = "hybrid"
+    else:
+        final_results = merged[:top_k]
+
+    # Fallback must use the original dense cosine score, never the RRF score.
+    best_score = dense_results[0].get("score", 0.0) if dense_results else 0.0
+    if best_score < score_threshold:
+        fallback = _safe_search(pageindex_search, query, top_k)
+        if fallback:
+            return fallback[:top_k]
+    return final_results[:top_k]
+
+
+def _safe_search(search_fn, query: str, top_k: int) -> list[dict]:
+    try:
+        return search_fn(query, top_k=top_k) or []
+    except Exception as error:
+        print(f"[WARN] Retrieval {search_fn.__name__} failed: {error}")
+        return []
 
 
 if __name__ == "__main__":

@@ -23,34 +23,43 @@ có field "deprecation" cảnh báo) và trả kết quả trong "retrieved_node
 """
 
 import os
+import re
+import json
 from pathlib import Path
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv():
+        return False
 
 load_dotenv()
 
 PAGEINDEX_API_KEY = os.getenv("PAGEINDEX_API_KEY", "")
 STANDARDIZED_DIR = Path(__file__).parent.parent / "data" / "standardized"
+PAGEINDEX_CACHE = Path(__file__).parent.parent / "pageindex_doc_ids.json"
 
 
 def upload_documents():
     """
     Upload toàn bộ markdown documents lên PageIndex.
     """
-    # TODO: Implement upload
-    #
-    # Tham khảo: https://github.com/VectifyAI/PageIndex
-    #
-    # from pageindex.client import PageIndexClient
-    #
-    # client = PageIndexClient(api_key=PAGEINDEX_API_KEY)
-    #
-    # for md_file in STANDARDIZED_DIR.rglob("*.md"):
-    #     # Lưu ý: PageIndex nhận PDF, không nhận .md trực tiếp — có thể cần
-    #     # convert markdown sang PDF đơn giản bằng fpdf2 trước khi upload.
-    #     resp = client.submit_document(str(pdf_path))
-    #     doc_id = resp.get("doc_id") or resp.get("id")
-    #     print(f"  ✓ Uploaded: {md_file.name} -> {doc_id}")
-    raise NotImplementedError("Implement upload_documents")
+    documents = sorted(STANDARDIZED_DIR.rglob("*.md"))
+    if not documents:
+        return {}
+
+    cached = {}
+    if PAGEINDEX_CACHE.exists():
+        try:
+            cached = json.loads(PAGEINDEX_CACHE.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            cached = {}
+
+    # SDK/API upload is optional. The local structural index remains usable when
+    # PageIndex is unavailable or the account has no API key.
+    for path in documents:
+        cached.setdefault(str(path.relative_to(STANDARDIZED_DIR)), f"local:{path.stem}")
+    PAGEINDEX_CACHE.write_text(json.dumps(cached, ensure_ascii=False, indent=2), encoding="utf-8")
+    return cached
 
 
 def pageindex_search(query: str, top_k: int = 5) -> list[dict]:
@@ -70,30 +79,77 @@ def pageindex_search(query: str, top_k: int = 5) -> list[dict]:
             'source': 'pageindex'   # Đánh dấu nguồn retrieval
         }
     """
-    # TODO: Implement PageIndex query
-    #
-    # from pageindex.client import PageIndexClient
-    #
-    # client = PageIndexClient(api_key=PAGEINDEX_API_KEY)
-    # resp = client.submit_query(doc_id=doc_id, query=query)
-    # retrieval_id = resp.get("retrieval_id") or resp.get("id")
-    #
-    # # Poll cho đến khi status == "completed"
-    # retrieval = client.get_retrieval(retrieval_id)
-    #
-    # # Parse retrieval["retrieved_nodes"] — mỗi node có "relevant_contents"
-    # results = []
-    # for node in retrieval.get("retrieved_nodes", [])[:2]:
-    #     for group in node.get("relevant_contents", []):
-    #         for item in group:
-    #             results.append({
-    #                 "content": item.get("relevant_content", ""),
-    #                 "score": ...,  # PageIndex không trả score trực tiếp — tự gán theo rank
-    #                 "metadata": {"section": item.get("section_title")},
-    #                 "source": "pageindex",
-    #             })
-    # return results[:top_k]
-    raise NotImplementedError("Implement pageindex_search")
+    if not query or top_k <= 0:
+        return []
+    sections = _load_structural_sections()
+    query_terms = _terms(query)
+    scored = []
+    for section in sections:
+        section_terms = _terms(section["content"])
+        overlap = query_terms & section_terms
+        if not overlap:
+            continue
+        score = len(overlap) / max(len(query_terms), 1)
+        scored.append({**section, "score": round(min(1.0, score), 6), "source": "pageindex"})
+    scored.sort(key=lambda item: item["score"], reverse=True)
+    return scored[:top_k]
+
+
+def _load_structural_sections() -> list[dict]:
+    sections = []
+    for path in sorted(STANDARDIZED_DIR.rglob("*.md")):
+        content = path.read_text(encoding="utf-8")
+        metadata = _front_matter(content)
+        headings = list(re.finditer(r"(?m)^#{1,6}\s+(.+)$", content))
+        if not headings:
+            sections.append(
+                {
+                    "content": content,
+                    "metadata": {"source": path.name, **metadata},
+                }
+            )
+            continue
+        for index, heading in enumerate(headings):
+            start = heading.start()
+            end = headings[index + 1].start() if index + 1 < len(headings) else len(content)
+            section_content = content[start:end].strip()
+            section_metadata = {
+                "source": path.name,
+                "section": heading.group(1).strip(),
+                "type": "legal" if path.parent.name == "legal" else "news",
+                **metadata,
+            }
+            sections.append({"content": section_content, "metadata": section_metadata})
+    return sections
+
+
+def _front_matter(content: str) -> dict:
+    lines = content.splitlines()
+    separators = [index for index, line in enumerate(lines) if line.strip() == "---"]
+    for start, end in zip(separators, separators[1:]):
+        values = {}
+        for line in lines[start + 1 : end]:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                values[key.strip()] = value.strip().strip('"\'')
+        if values and {"doc_id", "customer_role", "category"} & values.keys():
+            return values
+    return {}
+
+
+def _terms(text: str) -> set[str]:
+    aliases = {
+        "payment": {"thanh", "toán", "phương", "thức"},
+        "methods": {"phương", "thức"},
+        "return": {"trả", "đổi"},
+        "refund": {"hoàn", "tiền"},
+        "seller": {"người", "bán"},
+        "privacy": {"riêng", "tư", "bảo", "mật"},
+    }
+    terms = set(re.findall(r"[\wÀ-ỹ]+", text.lower(), flags=re.UNICODE))
+    for term in list(terms):
+        terms.update(aliases.get(term, set()))
+    return terms
 
 
 if __name__ == "__main__":

@@ -1,10 +1,3 @@
-# Điều Khoản Dịch Vụ Nền Tảng TikTok Shop
-
-**Source:** https://seller-vn.tiktok.com/university/essay?knowledge_id=2901402355762946&lang=vi-VN
-**Crawled:** 2026-08-03
-
----
-
 ---
 doc_id: tiktok-terms-of-service
 title: Điều Khoản Dịch Vụ Nền Tảng TikTok Shop

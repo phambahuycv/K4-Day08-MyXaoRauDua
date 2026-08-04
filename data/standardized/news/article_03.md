@@ -1,10 +1,3 @@
-# Chính Sách Về Vật Phẩm Giao Dịch Và Hoàn Tiền Trên TikTok Shop
-
-**Source:** https://seller-vn.tiktok.com/university/essay?default_language=vi-VN&knowledge_id=7045464018339600&lang=vi-VN
-**Crawled:** 2026-08-03
-
----
-
 ---
 doc_id: tiktok-virtual-items
 title: Chính Sách Về Vật Phẩm Giao Dịch Và Hoàn Tiền Trên TikTok Shop

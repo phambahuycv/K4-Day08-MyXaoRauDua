@@ -1,10 +1,3 @@
-# Tiêu Chuẩn Cộng Đồng Và Chế Tài Cấm Đăng Tải Nội Dung Gian Lận
-
-**Source:** https://seller-vn.tiktok.com/university/essay?article_type=agreement&default_language=vi-VN&knowledge_id=6837773789234946&lang=vi-VN
-**Crawled:** 2026-08-03
-
----
-
 ---
 doc_id: tiktok-community-guidelines
 title: Tiêu Chuẩn Cộng Đồng Và Chế Tài Cấm Đăng Tải Nội Dung Gian Lận

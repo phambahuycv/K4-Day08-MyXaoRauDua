@@ -168,6 +168,45 @@ Trường hợp phát sinh giao dịch hoàn tiền cho khách hàng, FPT Shop s
 - Hoàn trả qua thẻ ngân hàng/ví điện tử: Hoàn tiền từ 3 - 7 ngày làm việc tùy thuộc vào ngân hàng phát hành thẻ."""
     }
 
+    metadata = {
+        "chinh-sach-thanh-toan.docx": """---
+doc_id: fpt-payment-policy
+title: Chính Sách Thanh Toán Và Bảo Mật Giao Dịch FPT Shop
+customer_role: buyer
+category: payment
+language: vi
+source_url: https://fptshop.com.vn/chinh-sach-thanh-toan
+retrieved_at: 2026-08-03
+document_version: "2026"
+---
+
+""",
+        "chinh-sach-giao-hang.docx": """---
+doc_id: fpt-shipping-policy
+title: Chính Sách Giao Hàng Và Đồng Kiểm FPT Shop
+customer_role: buyer
+category: shipping
+language: vi
+source_url: https://fptshop.com.vn/chinh-sach-giao-hang
+retrieved_at: 2026-08-03
+document_version: "2026"
+---
+
+""",
+        "chinh-sach-doi-san-pham.docx": """---
+doc_id: fpt-return-policy
+title: Chính Sách Đổi Sản Phẩm Và Hoàn Tiền FPT Shop
+customer_role: buyer
+category: refund
+language: vi
+source_url: https://fptshop.com.vn/chinh-sach-doi-tra
+retrieved_at: 2026-08-03
+document_version: "2026"
+---
+
+""",
+    }
+
     legal_files = [
         ("chinh-sach-thanh-toan.docx", fpt_policies["chinh-sach-thanh-toan.docx"]),
         ("chinh-sach-giao-hang.docx", fpt_policies["chinh-sach-giao-hang.docx"]),
@@ -184,7 +223,7 @@ Trường hợp phát sinh giao dịch hoàn tiền cho khách hàng, FPT Shop s
             print(f"[OK] Dang tao file DOCX FPT Shop: {dst_name}...")
             # Temp markdown path for function
             tmp_md = DATA_DIR / f"{dst_path.stem}.tmp.md"
-            tmp_md.write_text(policy_text, encoding="utf-8")
+            tmp_md.write_text(metadata[dst_name] + policy_text, encoding="utf-8")
             create_docx_from_markdown(tmp_md, dst_path)
             if tmp_md.exists():
                 tmp_md.unlink()
