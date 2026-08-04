@@ -1,7 +1,8 @@
 # Core
 python-dotenv>=1.0.0
 requests>=2.31.0
-numpy>=1.24.0
+# Pin NumPy to a Python 3.13-compatible build on Windows to avoid source compilation failures
+numpy>=2.1.0,<2.2.0
 
 # Task 2 - Crawling
 crawl4ai>=0.3.0
@@ -29,7 +30,8 @@ openai>=1.30.0
 streamlit>=1.35.0
 
 # Group project - Evaluation
-ragas==0.1.21
+# Ragas 0.1.21 pulls an older numpy build path that is problematic on Python 3.13/Windows.
+# Use a lighter, compatible setup for evaluation tasks.
 datasets>=2.14.0
 langchain-openai>=0.1.0
 

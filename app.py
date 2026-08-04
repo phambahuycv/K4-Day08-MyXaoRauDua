@@ -43,10 +43,10 @@ with st.sidebar:
     st.subheader("💡 Câu hỏi gợi ý")
     suggestions = [
         "Thời hạn yêu cầu trả hàng/hoàn tiền là bao lâu?",
-        "Shopee hỗ trợ những phương thức thanh toán nào?",
+        "FPT Shop hỗ trợ những phương thức thanh toán nào?",
         "Làm sao để đổi phương thức thanh toán đơn hàng?",
         "Quy định về đăng bán sản phẩm cho người bán?",
-        "Cách mua hàng trên Shopee của quốc gia khác?",
+        "Cách mua hàng trên FPT Shop của quốc gia khác?",
     ]
     for s in suggestions:
         if st.button(s, use_container_width=True, key=f"sug_{s[:20]}"):
