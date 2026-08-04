@@ -1,17 +1,77 @@
 [
   {
-    "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
-    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Khách hàng FPT Shop được đổi sản phẩm 1 đổi 1 trong thời gian bao lâu?",
+    "expected_answer": "Khách hàng được hưởng chính sách 1 đổi 1 trong vòng 30 ngày kể từ ngày mua nếu sản phẩm gặp lỗi phần cứng do nhà sản xuất.",
+    "expected_context": "Chính Sách Đổi Sản Phẩm Và Hoàn Tiền FPT Shop, mục Điều kiện đổi trả sản phẩm mới 100%"
   },
   {
-    "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
-    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
-    "expected_context": "Trang Payment Methods Overview"
+    "question": "Phí thu lại sản phẩm khi đổi trả trong tháng đầu tiên tại FPT Shop là bao nhiêu?",
+    "expected_answer": "Phí thu lại tương đương 20% giá trị sản phẩm ghi trên hóa đơn. Từ tháng thứ 2 trở đi, mỗi tháng cộng thêm 10%.",
+    "expected_context": "Chính Sách Đổi Sản Phẩm Và Hoàn Tiền FPT Shop, mục Quy định nhập trả và phí thu lại"
   },
   {
-    "question": "Người bán không được đăng bán những sản phẩm nào?",
-    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
-    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+    "question": "Thời gian hoàn tiền qua thẻ ngân hàng tại FPT Shop là bao lâu?",
+    "expected_answer": "Hoàn tiền từ 3 đến 7 ngày làm việc tùy thuộc vào ngân hàng phát hành thẻ. Hoàn tiền mặt tại siêu thị thì xử lý ngay lập tức.",
+    "expected_context": "Chính Sách Đổi Sản Phẩm Và Hoàn Tiền FPT Shop, mục Thời gian và phương thức hoàn tiền"
+  },
+  {
+    "question": "FPT Shop giao hàng trong bao lâu tại khu vực nội thành Hà Nội và TP.HCM?",
+    "expected_answer": "Giao siêu tốc trong vòng 2 đến 4 giờ làm việc tại khu vực nội thành Hà Nội và TP. Hồ Chí Minh.",
+    "expected_context": "Chính Sách Giao Hàng Và Đồng Kiểm FPT Shop, mục Phạm vi và thời gian giao hàng"
+  },
+  {
+    "question": "Khi nhận hàng từ FPT Shop, khách hàng cần đồng kiểm những gì?",
+    "expected_answer": "Kiểm tra tình trạng niêm phong, tem chống giả và nhãn mác bên ngoài; mở hộp kiểm tra ngoại quan sản phẩm (trầy xước, móp méo, nứt vỡ); kiểm tra số lượng và loại phụ kiện đi kèm.",
+    "expected_context": "Chính Sách Giao Hàng Và Đồng Kiểm FPT Shop, mục Quy định đồng kiểm khi nhận hàng"
+  },
+  {
+    "question": "FPT Shop hỗ trợ những phương thức thanh toán nào?",
+    "expected_answer": "Tiền mặt COD, chuyển khoản qua thẻ ngân hàng nội địa ATM/Internet Banking, thẻ tín dụng quốc tế Visa/MasterCard/JCB, ví điện tử VNPAY/MoMo/ZaloPay, và trả góp qua công ty tài chính hoặc thẻ tín dụng.",
+    "expected_context": "Chính Sách Thanh Toán Và Bảo Mật Giao Dịch FPT Shop, mục Các phương thức thanh toán áp dụng"
+  },
+  {
+    "question": "Hệ thống thanh toán của FPT Shop đạt tiêu chuẩn bảo mật gì?",
+    "expected_answer": "Đạt tiêu chuẩn bảo mật PCI DSS cấp độ cao nhất, dữ liệu thẻ được mã hóa theo giao thức SSL 256-bit. FPT Shop cam kết không lưu giữ thông tin số thẻ hoặc mã CVV/CVC trên hệ thống máy chủ.",
+    "expected_context": "Chính Sách Thanh Toán Và Bảo Mật Giao Dịch FPT Shop, mục Chính sách bảo mật thông tin thanh toán"
+  },
+  {
+    "question": "Người mua trên TikTok Shop có quyền yêu cầu trả hàng hoàn tiền trong bao lâu?",
+    "expected_answer": "Trong vòng 6 ngày kể từ thời điểm đơn vị vận chuyển cập nhật trạng thái giao hàng thành công.",
+    "expected_context": "Chính Sách Về Vật Phẩm Giao Dịch Và Hoàn Tiền Trên TikTok Shop, mục Thời gian yêu cầu trả hàng và hoàn tiền"
+  },
+  {
+    "question": "Điều kiện để được hoàn trả sản phẩm trên TikTok Shop là gì?",
+    "expected_answer": "Sản phẩm phải còn nguyên tem mác, hộp đựng nguyên bản và chưa qua sử dụng. Người mua bắt buộc cung cấp video mở kiện hàng thể hiện rõ tình trạng vật phẩm.",
+    "expected_context": "Chính Sách Về Vật Phẩm Giao Dịch Và Hoàn Tiền Trên TikTok Shop, mục Điều kiện được chấp thuận hoàn trả vật phẩm"
+  },
+  {
+    "question": "TikTok Shop nghiêm cấm Người bán đăng bán những sản phẩm nào?",
+    "expected_answer": "Nghiêm cấm đăng bán các mặt hàng giả mạo nhãn hiệu, sao chép thiết kế công nghiệp hoặc xâm phạm quyền sở hữu trí tuệ của chủ thể khác đã được bảo hộ.",
+    "expected_context": "Chính Sách Sở Hữu Trí Tuệ Và Vi Phạm Đăng Bán Hàng Hóa, mục Nghiêm cấm vi phạm bản quyền và nhãn hiệu"
+  },
+  {
+    "question": "Người bán bị gỡ sản phẩm trên TikTok Shop có bao nhiêu ngày để kháng cáo?",
+    "expected_answer": "Người bán có thời hạn 7 ngày làm việc để gửi thư kháng cáo kèm hóa đơn nhập khẩu chính ngạch hoặc chứng nhận phân phối ủy quyền hợp lệ.",
+    "expected_context": "Chính Sách Sở Hữu Trí Tuệ Và Vi Phạm Đăng Bán Hàng Hóa, mục Kháng cáo quyết định gỡ sản phẩm"
+  },
+  {
+    "question": "Gian hàng TikTok Shop bị tích lũy bao nhiêu điểm vi phạm sẽ bị hủy tư cách bán hàng?",
+    "expected_answer": "Khi tích lũy đủ 48 điểm vi phạm, gian hàng sẽ bị hủy bỏ tư cách bán hàng, cắt kết nối giỏ hàng và thu hồi quyền lợi quảng bá livestream.",
+    "expected_context": "Tiêu Chuẩn Cộng Đồng Và Chế Tài Cấm Đăng Tải Nội Dung Gian Lận, mục Hệ thống điểm vi phạm và hình phạt bổ sung"
+  },
+  {
+    "question": "TikTok Shop xử lý tranh chấp giữa Người mua và Người bán như thế nào?",
+    "expected_answer": "TikTok Shop đóng vai trò trung gian hòa giải dựa trên bằng chứng do hai bên cung cấp như video mở hộp và lịch sử vận đơn. Quyết định cuối cùng của bộ phận giải quyết khiếu nại nền tảng là có hiệu lực thực thi.",
+    "expected_context": "Điều Khoản Dịch Vụ Nền Tảng TikTok Shop, mục Cơ chế xử lý tranh chấp và khiếu nại"
+  },
+  {
+    "question": "Nền tảng TikTok Shop thu thập những thông tin gì của Người mua?",
+    "expected_answer": "Thu thập họ tên, số điện thoại, địa chỉ nhận hàng và thông tin thanh toán (mã hóa an toàn) nhằm phục vụ xử lý đơn hàng, điều phối vận chuyển và chăm sóc hỗ trợ sau mua hàng.",
+    "expected_context": "Chính Sách Quyền Riêng Tư Và Bảo Mật Thông Tin Khách Hàng, mục Mục đích thu thập thông tin cá nhân"
+  },
+  {
+    "question": "Nếu sản phẩm giao từ FPT Shop bị hư hỏng hoặc sai model khi đồng kiểm thì xử lý thế nào?",
+    "expected_answer": "Khách hàng có quyền từ chối nhận hàng và yêu cầu nhân viên giao hàng lập biên bản xác nhận bất thường. FPT Shop sẽ gửi lại sản phẩm thay thế mới trong vòng 24 giờ.",
+    "expected_context": "Chính Sách Giao Hàng Và Đồng Kiểm FPT Shop, mục Quy trình xử lý khi phát sinh sự cố giao hàng"
   }
 ]
