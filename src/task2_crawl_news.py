@@ -20,70 +20,76 @@ Lưu ý: một số trang help center dùng JavaScript render (SPA) — nếu cr
 tiêu đề mà không có nội dung, đổi sang bài viết khác cùng domain thay vì cố xử lý.
 """
 
-import asyncio
+import csv
 import json
 from datetime import datetime
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "landing" / "news"
+K4_DIR = Path(__file__).parent.parent / "data" / "k4_ecommerce"
 
 
 def setup_directory():
     """Tạo thư mục data/landing/news/ nếu chưa có."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"[OK] Thu muc da san sang: {DATA_DIR}")
 
 
-# TODO: Điền danh sách URL bài viết cần crawl
-ARTICLE_URLS = [
-    # Ví dụ (trang công khai Shopee Vietnam):
-    # "https://help.shopee.vn/portal/4/article/...",
-]
-
-
-async def crawl_article(url: str) -> dict:
-    """
-    Crawl một bài viết và trả về dict chứa metadata + content.
-
-    Returns:
-        {
-            "url": str,
-            "title": str,
-            "date_crawled": str (ISO format),
-            "content_markdown": str
-        }
-    """
-    from crawl4ai import AsyncWebCrawler
-
-    # TODO: Implement crawling logic
-    # async with AsyncWebCrawler() as crawler:
-    #     result = await crawler.arun(url=url)
-    #     return {
-    #         "url": url,
-    #         "title": result.metadata.get("title", "Unknown"),
-    #         "date_crawled": datetime.now().isoformat(),
-    #         "content_markdown": result.markdown,
-    #     }
-    raise NotImplementedError("Implement crawl_article")
-
-
-async def crawl_all():
-    """Crawl toàn bộ bài viết trong ARTICLE_URLS."""
+def pack_news_articles():
+    """Đóng gói bài viết từ k4_ecommerce thành các file JSON trong data/landing/news/."""
     setup_directory()
 
-    for i, url in enumerate(ARTICLE_URLS, 1):
-        print(f"[{i}/{len(ARTICLE_URLS)}] Crawling: {url}")
-        article = await crawl_article(url)
+    # Read sources.csv metadata mapping
+    sources_map = {}
+    csv_file = K4_DIR / "sources.csv"
+    if csv_file.exists():
+        with open(csv_file, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                doc_name = Path(row["file_path"]).name
+                sources_map[doc_name] = row
 
-        # Lưu file JSON
-        filename = f"article_{i:02d}.json"
-        filepath = DATA_DIR / filename
-        filepath.write_text(json.dumps(article, ensure_ascii=False, indent=2))
-        print(f"  ✓ Saved: {filepath}")
+    tiktok_urls = [
+        "https://seller-vn.tiktok.com/university/essay?knowledge_id=2901402355762946&lang=vi-VN",
+        "https://seller-vn.tiktok.com/university/essay?default_language=vi-VN&knowledge_id=6837776050308866&lang=vi-VN",
+        "https://seller-vn.tiktok.com/university/essay?default_language=vi-VN&knowledge_id=7045464018339600&lang=vi-VN",
+        "https://seller-vn.tiktok.com/university/essay?knowledge_id=8692722068424464&lang=vi-VN",
+        "https://seller-vn.tiktok.com/university/essay?article_type=agreement&default_language=vi-VN&knowledge_id=6837773789234946&lang=vi-VN",
+    ]
+
+    news_files = [
+        "tiktok-community-guidelines.md",
+        "tiktok-terms-of-service.md",
+        "tiktok-virtual-items.md",
+        "tiktok-copyright-policy.md",
+        "tiktok-privacy-policy.md",
+    ]
+
+    for i, (file_name, url) in enumerate(zip(news_files, tiktok_urls), 1):
+        file_path = K4_DIR / file_name
+        if not file_path.exists():
+            print(f"[WARN] Khong tim thay {file_path}")
+            continue
+
+        content = file_path.read_text(encoding="utf-8")
+        meta = sources_map.get(file_name, {})
+        title = meta.get("title", file_name.replace(".md", "").replace("-", " ").title())
+
+        article_data = {
+            "url": url,
+            "title": title,
+            "date_crawled": meta.get("retrieved_at", datetime.now().isoformat()),
+            "content_markdown": content
+        }
+
+        output_filename = f"article_{i:02d}.json"
+        output_filepath = DATA_DIR / output_filename
+        output_filepath.write_text(json.dumps(article_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[OK] Da tao JSON: {output_filepath.name} ({output_filepath.stat().st_size} bytes)")
+
+
 
 
 if __name__ == "__main__":
-    if not ARTICLE_URLS:
-        print("⚠ Hãy điền ARTICLE_URLS trước khi chạy!")
-        print("Gợi ý: tìm trang hướng dẫn/hỗ trợ khách hàng trên help center của sàn TMĐT")
-    else:
-        asyncio.run(crawl_all())
+    pack_news_articles()
+
