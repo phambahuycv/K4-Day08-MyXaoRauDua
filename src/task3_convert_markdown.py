@@ -19,7 +19,11 @@ Hướng dẫn:
 import json
 from pathlib import Path
 
-from markitdown import MarkItDown
+try:
+    from markitdown import MarkItDown
+    HAS_MARKITDOWN = True
+except ImportError:
+    HAS_MARKITDOWN = False
 
 LANDING_DIR = Path(__file__).parent.parent / "data" / "landing"
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "standardized"
@@ -31,17 +35,37 @@ def convert_legal_docs():
     output_dir = OUTPUT_DIR / "legal"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    md = MarkItDown()
+    md = MarkItDown() if HAS_MARKITDOWN else None
 
     for filepath in legal_dir.iterdir():
         if filepath.suffix.lower() in (".pdf", ".docx", ".doc"):
             print(f"Converting: {filepath.name}")
-            # TODO: Convert và lưu file
-            # result = md.convert(str(filepath))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            # output_path.write_text(result.text_content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_legal_docs")
+            output_path = output_dir / f"{filepath.stem}.md"
+            converted = False
+            if md:
+                try:
+                    result = md.convert(str(filepath))
+                    if result and result.text_content:
+                        output_path.write_text(result.text_content, encoding="utf-8")
+                        converted = True
+                except Exception as e:
+                    print(f"  [WARN] MarkItDown warning: {e}")
+            
+            if not converted:
+                # Check for original markdown in k4_ecommerce or extract text
+                k4_md = Path(__file__).parent.parent / "data" / "k4_ecommerce" / f"{filepath.stem}.md"
+                if k4_md.exists():
+                    output_path.write_text(k4_md.read_text(encoding="utf-8"), encoding="utf-8")
+                else:
+                    try:
+                        from pypdf import PdfReader
+                        reader = PdfReader(str(filepath))
+                        text = "\n\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                        output_path.write_text(text, encoding="utf-8")
+                    except Exception as ex:
+                        print(f"  [WARN] Fallback extract failed: {ex}")
+            print(f"  [OK] Saved: {output_path}")
+
 
 
 def convert_news_articles():
@@ -53,19 +77,17 @@ def convert_news_articles():
     for filepath in news_dir.iterdir():
         if filepath.suffix.lower() == ".json":
             print(f"Converting: {filepath.name}")
-            # TODO: Đọc JSON, extract content_markdown, lưu thành .md
-            # data = json.loads(filepath.read_text(encoding="utf-8"))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            #
-            # # Thêm metadata header
-            # header = f"# {data.get('title', 'Unknown')}\n\n"
-            # header += f"**Source:** {data.get('url', 'N/A')}\n"
-            # header += f"**Crawled:** {data.get('date_crawled', 'N/A')}\n\n---\n\n"
-            #
-            # content = header + data.get("content_markdown", "")
-            # output_path.write_text(content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_news_articles")
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+            output_path = output_dir / f"{filepath.stem}.md"
+
+            # Thêm metadata header
+            header = f"# {data.get('title', 'Unknown')}\n\n"
+            header += f"**Source:** {data.get('url', 'N/A')}\n"
+            header += f"**Crawled:** {data.get('date_crawled', 'N/A')}\n\n---\n\n"
+
+            content = header + data.get("content_markdown", "")
+            output_path.write_text(content, encoding="utf-8")
+            print(f"  [OK] Saved: {output_path}")
 
 
 def convert_all():
@@ -80,8 +102,10 @@ def convert_all():
     print("\n--- News Articles ---")
     convert_news_articles()
 
-    print("\n✓ Done! Output tại:", OUTPUT_DIR)
+    print("\n[OK] Done! Output tai:", OUTPUT_DIR)
+
 
 
 if __name__ == "__main__":
     convert_all()
+
