@@ -19,10 +19,33 @@ Hướng dẫn:
 import json
 from pathlib import Path
 
-from markitdown import MarkItDown
+try:
+    from markitdown import MarkItDown
+    HAS_MARKITDOWN = True
+except ImportError:
+    HAS_MARKITDOWN = False
 
 LANDING_DIR = Path(__file__).parent.parent / "data" / "landing"
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "standardized"
+
+
+def extract_docx_text(docx_path: Path) -> str:
+    """Đọc văn bản từ file .docx không cần thư viện ngoài (dùng zipfile + xml)."""
+    import zipfile
+    import xml.etree.ElementTree as ET
+    try:
+        with zipfile.ZipFile(docx_path) as z:
+            xml_content = z.read('word/document.xml')
+            tree = ET.fromstring(xml_content)
+            paragraphs = []
+            for p in tree.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
+                texts = [node.text for node in p.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t') if node.text]
+                if texts:
+                    paragraphs.append(''.join(texts))
+            return "\n\n".join(paragraphs)
+    except Exception as e:
+        print(f"  [WARN] Docx extract error: {e}")
+        return ""
 
 
 def convert_legal_docs():
@@ -31,17 +54,37 @@ def convert_legal_docs():
     output_dir = OUTPUT_DIR / "legal"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    md = MarkItDown()
+    md = MarkItDown() if HAS_MARKITDOWN else None
 
     for filepath in legal_dir.iterdir():
         if filepath.suffix.lower() in (".pdf", ".docx", ".doc"):
             print(f"Converting: {filepath.name}")
-            # TODO: Convert và lưu file
-            # result = md.convert(str(filepath))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            # output_path.write_text(result.text_content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_legal_docs")
+            output_path = output_dir / f"{filepath.stem}.md"
+            converted_text = ""
+
+            if md:
+                try:
+                    result = md.convert(str(filepath))
+                    if result and result.text_content:
+                        converted_text = result.text_content
+                except Exception as e:
+                    print(f"  [WARN] MarkItDown warning: {e}")
+
+            if not converted_text and filepath.suffix.lower() == ".docx":
+                converted_text = extract_docx_text(filepath)
+
+            if not converted_text:
+                k4_md = Path(__file__).parent.parent / "data" / "k4_ecommerce" / f"{filepath.stem}.md"
+                if k4_md.exists():
+                    converted_text = k4_md.read_text(encoding="utf-8")
+
+            if converted_text:
+                title = filepath.stem.replace("-", " ").title()
+                content = f"# {title}\n\n{converted_text}"
+                output_path.write_text(content, encoding="utf-8")
+                print(f"  [OK] Saved: {output_path}")
+
+
 
 
 def convert_news_articles():
@@ -53,19 +96,17 @@ def convert_news_articles():
     for filepath in news_dir.iterdir():
         if filepath.suffix.lower() == ".json":
             print(f"Converting: {filepath.name}")
-            # TODO: Đọc JSON, extract content_markdown, lưu thành .md
-            # data = json.loads(filepath.read_text(encoding="utf-8"))
-            # output_path = output_dir / f"{filepath.stem}.md"
-            #
-            # # Thêm metadata header
-            # header = f"# {data.get('title', 'Unknown')}\n\n"
-            # header += f"**Source:** {data.get('url', 'N/A')}\n"
-            # header += f"**Crawled:** {data.get('date_crawled', 'N/A')}\n\n---\n\n"
-            #
-            # content = header + data.get("content_markdown", "")
-            # output_path.write_text(content, encoding="utf-8")
-            # print(f"  ✓ Saved: {output_path}")
-            raise NotImplementedError("Implement convert_news_articles")
+            data = json.loads(filepath.read_text(encoding="utf-8"))
+            output_path = output_dir / f"{filepath.stem}.md"
+
+            # Thêm metadata header
+            header = f"# {data.get('title', 'Unknown')}\n\n"
+            header += f"**Source:** {data.get('url', 'N/A')}\n"
+            header += f"**Crawled:** {data.get('date_crawled', 'N/A')}\n\n---\n\n"
+
+            content = header + data.get("content_markdown", "")
+            output_path.write_text(content, encoding="utf-8")
+            print(f"  [OK] Saved: {output_path}")
 
 
 def convert_all():
@@ -80,8 +121,10 @@ def convert_all():
     print("\n--- News Articles ---")
     convert_news_articles()
 
-    print("\n✓ Done! Output tại:", OUTPUT_DIR)
+    print("\n[OK] Done! Output tai:", OUTPUT_DIR)
+
 
 
 if __name__ == "__main__":
     convert_all()
+
