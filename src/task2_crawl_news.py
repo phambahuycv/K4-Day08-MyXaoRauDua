@@ -35,8 +35,11 @@ def setup_directory():
 
 # TODO: Điền danh sách URL bài viết cần crawl
 ARTICLE_URLS = [
-    # Ví dụ (trang công khai Shopee Vietnam):
-    # "https://help.shopee.vn/portal/4/article/...",
+    "https://help.shopee.vn/portal/4/article/188931",
+    "https://help.shopee.vn/portal/4/article/79233",
+    "https://help.shopee.vn/portal/4/article/189473",
+    "https://help.shopee.vn/portal/4/article/79377",
+    "https://help.shopee.vn/portal/4/article/79526",
 ]
 
 
@@ -54,16 +57,41 @@ async def crawl_article(url: str) -> dict:
     """
     from crawl4ai import AsyncWebCrawler
 
-    # TODO: Implement crawling logic
-    # async with AsyncWebCrawler() as crawler:
-    #     result = await crawler.arun(url=url)
-    #     return {
-    #         "url": url,
-    #         "title": result.metadata.get("title", "Unknown"),
-    #         "date_crawled": datetime.now().isoformat(),
-    #         "content_markdown": result.markdown,
-    #     }
-    raise NotImplementedError("Implement crawl_article")
+    if not url.startswith(("http://", "https://")):
+        raise ValueError("url must use http or https")
+    try:
+        async with AsyncWebCrawler() as crawler:
+            result = await crawler.arun(url=url)
+        if not getattr(result, "success", True):
+            raise RuntimeError(getattr(result, "error_message", "Crawl failed"))
+        markdown = getattr(result, "markdown", "") or ""
+        if hasattr(markdown, "raw_markdown"):
+            markdown = markdown.raw_markdown
+        metadata = getattr(result, "metadata", {}) or {}
+    except Exception:
+        # Public help pages also expose server-rendered text, which provides a
+        # deterministic fallback when the optional Playwright browser is absent.
+        import requests
+        from bs4 import BeautifulSoup
+
+        response = await asyncio.to_thread(
+            requests.get, url, timeout=60, headers={"User-Agent": "Mozilla/5.0"}
+        )
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        for tag in soup(["script", "style", "noscript", "svg"]):
+            tag.decompose()
+        title = soup.title.get_text(" ", strip=True) if soup.title else "Unknown"
+        markdown = "\n\n".join(
+            line.strip() for line in soup.get_text("\n").splitlines() if line.strip()
+        )
+        metadata = {"title": title}
+    return {
+        "url": url,
+        "title": metadata.get("title") or "Unknown",
+        "date_crawled": datetime.now().astimezone().isoformat(),
+        "content_markdown": str(markdown),
+    }
 
 
 async def crawl_all():
@@ -72,13 +100,17 @@ async def crawl_all():
 
     for i, url in enumerate(ARTICLE_URLS, 1):
         print(f"[{i}/{len(ARTICLE_URLS)}] Crawling: {url}")
-        article = await crawl_article(url)
+        try:
+            article = await crawl_article(url)
+        except Exception as exc:
+            print(f"  Failed: {exc}")
+            continue
 
         # Lưu file JSON
         filename = f"article_{i:02d}.json"
         filepath = DATA_DIR / filename
-        filepath.write_text(json.dumps(article, ensure_ascii=False, indent=2))
-        print(f"  ✓ Saved: {filepath}")
+        filepath.write_text(json.dumps(article, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"  Saved: {filepath}")
 
 
 if __name__ == "__main__":
