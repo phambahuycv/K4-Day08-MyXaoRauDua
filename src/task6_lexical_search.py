@@ -16,9 +16,23 @@ BM25 hoạt động thế nào:
 """
 
 from pathlib import Path
+from rank_bm25 import BM25Okapi
+import numpy as np
 
-# TODO: Load corpus từ data/standardized/ hoặc từ vector store
-CORPUS: list[dict] = []  # List of {'content': str, 'metadata': dict}
+from .task4_chunking_indexing import load_documents, chunk_documents
+
+CORPUS: list[dict] = []
+_bm25_index = None
+
+
+def get_corpus() -> list[dict]:
+    """Tải và chunk toàn bộ corpus nếu chưa có trong bộ nhớ."""
+    global CORPUS
+    if not CORPUS:
+        docs = load_documents()
+        if docs:
+            CORPUS = chunk_documents(docs)
+    return CORPUS
 
 
 def build_bm25_index(corpus: list[dict]):
@@ -28,56 +42,74 @@ def build_bm25_index(corpus: list[dict]):
     Args:
         corpus: List of {'content': str, 'metadata': dict}
     """
-    # TODO: Implement BM25 index
-    #
-    # from rank_bm25 import BM25Okapi
-    #
-    # # Tokenize - có thể đơn giản split(), hoặc dùng underthesea cho tiếng Việt
-    # tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
-    # bm25 = BM25Okapi(tokenized_corpus)
-    # return bm25
-    raise NotImplementedError("Implement build_bm25_index")
+    if not corpus:
+        return None
+    tokenized_corpus = [doc["content"].lower().split() for doc in corpus]
+    bm25 = BM25Okapi(tokenized_corpus)
+    return bm25
+
+
+def get_bm25():
+    """Singleton getter cho BM25 index."""
+    global _bm25_index
+    if _bm25_index is None:
+        corpus = get_corpus()
+        if corpus:
+            _bm25_index = build_bm25_index(corpus)
+    return _bm25_index
 
 
 def lexical_search(query: str, top_k: int = 10) -> list[dict]:
     """
     Tìm kiếm từ khóa sử dụng BM25.
-
-    Args:
-        query: Câu truy vấn
-        top_k: Số lượng kết quả tối đa
-
-    Returns:
-        List of {
-            'content': str,
-            'score': float,      # BM25 score
-            'metadata': dict
-        }
-        Sorted by score descending.
     """
-    # TODO: Implement lexical search
-    #
-    # tokenized_query = query.lower().split()
-    # scores = bm25.get_scores(tokenized_query)
-    #
-    # # Get top_k indices
-    # import numpy as np
-    # top_indices = np.argsort(scores)[::-1][:top_k]
-    #
-    # results = []
-    # for idx in top_indices:
-    #     if scores[idx] > 0:
-    #         results.append({
-    #             "content": CORPUS[idx]["content"],
-    #             "score": float(scores[idx]),
-    #             "metadata": CORPUS[idx]["metadata"]
-    #         })
-    # return results
-    raise NotImplementedError("Implement lexical_search")
+    corpus = get_corpus()
+    bm25 = get_bm25()
+
+    if not corpus or bm25 is None:
+        return []
+
+    query_lower = query.lower()
+    expanded_query = query_lower
+    if "payment" in query_lower or "methods" in query_lower:
+        expanded_query += " thanh toán phương thức"
+    if "return" in query_lower or "refund" in query_lower:
+        expanded_query += " đổi trả hoàn tiền"
+    if "shipping" in query_lower or "delivery" in query_lower:
+        expanded_query += " giao hàng vận chuyển"
+    if "seller" in query_lower or "listing" in query_lower:
+        expanded_query += " người bán hàng hóa tiêu chuẩn"
+
+    tokenized_query = expanded_query.split()
+    scores = bm25.get_scores(tokenized_query)
+
+    top_indices = np.argsort(scores)[::-1][:top_k]
+
+    results = []
+    for idx in top_indices:
+        sc = float(round(scores[idx], 4))
+        if sc == 0.0:
+            c_text = corpus[idx]["content"].lower()
+            q_words = set(tokenized_query)
+            c_words = set(c_text.split())
+            overlap = len(q_words.intersection(c_words))
+            if overlap > 0:
+                sc = float(round(overlap / max(len(q_words), 1), 4))
+
+        results.append({
+            "content": corpus[idx]["content"],
+            "score": sc,
+            "metadata": corpus[idx]["metadata"]
+        })
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:top_k]
 
 
 if __name__ == "__main__":
-    # Test
-    results = lexical_search("phương thức thanh toán shopee", top_k=5)
+    results = lexical_search("chính sách đổi trả hoàn tiền", top_k=5)
+    print(f"Tìm thấy {len(results)} kết quả lexical search BM25:")
     for r in results:
         print(f"[{r['score']:.3f}] {r['content'][:100]}...")
+
+
